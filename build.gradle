@@ -1,0 +1,83 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.4.1'
+    }
+}
+
+apply plugin: 'idea'
+apply plugin: 'groovy'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+
+group = 'ru.trylogic.gradle.plugins'
+
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+}
+
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            distribution "repo"
+        }
+    }
+    developers {
+        developer {
+            id "bsideup"
+            name "Sergei Egorov"
+            email "bsideup@gmail.com"
+        }
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', 'A gradle plugin for compiling Apache Thrift files')
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+bintray {
+    user = bintrayUser ?: 'USER'
+    key = bintrayKey ?: 'KEY'
+    publications = ['mavenJava']
+    pkg {
+        userOrg = 'bsideup'
+        repo = 'gradle'
+        name = 'gradle-plugin-thrift'
+        licenses = ['Apache-2.0']
+        websiteUrl = 'https://github.com/bsideup/GradleThrift'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.0'
+}
